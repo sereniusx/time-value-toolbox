@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>时间价值工具箱</title>
+    <style>
+        body{
+            font-family: -apple-system,BlinkMacSystemFont;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background:#f8fafc;
+        }
+        h1{margin-bottom:10px;}
+        .card{
+            background:white;
+            padding:20px;
+            margin-bottom:20px;
+            border-radius:12px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+        }
+        input,select,button{
+            padding:8px;
+            margin:5px 0;
+        }
+        button{
+            background:#111;
+            color:white;
+            border:none;
+            cursor:pointer;
+        }
+        button:hover{opacity:.8}
+        .small{font-size:13px;color:#666}
+        .log{
+            border-bottom:1px solid #eee;
+            padding:10px 0;
+        }
+        .ai{
+            background:#f1f5f9;
+            padding:8px;
+            margin-top:6px;
+            border-radius:8px;
+            font-size:13px;
+        }
+        .balance{
+            font-size:22px;
+            font-weight:bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>时间价值工具箱</h1>
+
+<div class="card">
+    <h3>时薪设置</h3>
+    <input type="number" id="hourly" placeholder="输入有效时薪 (B)" />
+    <button onclick="saveSettings()">保存</button>
+</div>
+
+<div class="card">
+    <h3>时间 ⇄ 金钱换算</h3>
+    <input type="number" id="minutes" placeholder="输入分钟" />
+    <button onclick="convert()">换算</button>
+    <div id="convertResult"></div>
+</div>
+
+<div class="card">
+    <h3>回本计算</h3>
+    <input type="number" id="cost" placeholder="成本" />
+    <input type="number" id="saveTime" placeholder="每月节省分钟" />
+    <button onclick="breakeven()">计算</button>
+    <div id="breakevenResult"></div>
+</div>
+
+<div class="card">
+    <h3>时间价值余额</h3>
+    <div class="balance" id="balance">0</div>
+</div>
+
+<div class="card">
+    <h3>新增行为记录</h3>
+    <select id="type">
+        <option value="学习">学习</option>
+        <option value="恢复">恢复</option>
+        <option value="工作">工作</option>
+        <option value="消费">消费</option>
+    </select>
+    <input type="number" id="duration" placeholder="分钟" />
+    <input type="text" id="note" placeholder="备注" />
+    <button onclick="addLog()">保存记录</button>
+</div>
+
+<div class="card">
+    <h3>行为账本</h3>
+    <div id="logs"></div>
+</div>
+
+<script>
+    const SETTINGS_KEY="tv.settings.v1"
+    const LOGS_KEY="tv.logs.v1"
+    const BALANCE_KEY="tv.balance.v1"
+    const aiEndpoint="/api/chat"
+
+    function getSettings(){
+        return JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}")
+    }
+    function saveSettings(){
+        const hourly=parseFloat(document.getElementById("hourly").value)
+        localStorage.setItem(SETTINGS_KEY,JSON.stringify({hourly}))
+        alert("保存成功")
+    }
+    function getHourly(){
+        return getSettings().hourly||0
+    }
+
+    function convert(){
+        const mins=parseFloat(document.getElementById("minutes").value)
+        const money=(mins/60)*getHourly()
+        document.getElementById("convertResult").innerText=
+            money?`≈ ${money.toFixed(2)} 元`:"请输入"
+    }
+
+    function breakeven(){
+        const cost=parseFloat(document.getElementById("cost").value)
+        const mins=parseFloat(document.getElementById("saveTime").value)
+        const monthly=(mins/60)*getHourly()
+        if(!monthly)return
+        const months=cost/monthly
+        document.getElementById("breakevenResult").innerText=
+            `约 ${months.toFixed(1)} 个月回本`
+    }
+
+    function getLogs(){
+        return JSON.parse(localStorage.getItem(LOGS_KEY)||"[]")
+    }
+    function saveLogs(logs){
+        localStorage.setItem(LOGS_KEY,JSON.stringify(logs))
+    }
+    function getBalance(){
+        return parseFloat(localStorage.getItem(BALANCE_KEY)||"0")
+    }
+    function setBalance(v){
+        localStorage.setItem(BALANCE_KEY,v)
+        document.getElementById("balance").innerText=v.toFixed(2)
+    }
+
+    async function addLog(){
+        const type=document.getElementById("type").value
+        const duration=parseFloat(document.getElementById("duration").value)
+        const note=document.getElementById("note").value
+        if(!duration)return
+
+        const value=(duration/60)*getHourly()
+        const balance=getBalance()+value
+        setBalance(balance)
+
+        const log={
+            id:Date.now(),
+            type,
+            duration,
+            note,
+            value,
+            date:new Date().toLocaleDateString()
+        }
+
+        renderLoading()
+
+        const ai=await callAI(log)
+
+        log.ai=ai
+
+        const logs=getLogs()
+        logs.unshift(log)
+        saveLogs(logs)
+
+        renderLogs()
+    }
+
+    async function callAI(log){
+        try{
+            const res=await fetch(aiEndpoint,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({
+                    messages:[
+                        {role:"system",content:"你是时间管理顾问"},
+                        {role:"user",content:`行为类型:${log.type}, 时长:${log.duration}分钟, 备注:${log.note}，请给简短建议`}
+                    ]
+                })
+            })
+            const data=await res.json()
+            return data.choices?.[0]?.message?.content||""
+        }catch(e){
+            return "AI生成失败"
+        }
+    }
+
+    function renderLoading(){
+        document.getElementById("logs").innerHTML="生成AI建议中..."
+    }
+
+    function renderLogs(){
+        const logs=getLogs()
+        const container=document.getElementById("logs")
+        container.innerHTML=""
+        logs.forEach(l=>{
+            container.innerHTML+=`
+      <div class="log">
+        <strong>${l.type}</strong> - ${l.duration}分钟
+        <div class="small">${l.note||""}</div>
+        <div class="small">价值 ${l.value.toFixed(2)}</div>
+        ${l.ai?`<div class="ai">${l.ai}</div>`:""}
+      </div>
+    `
+        })
+    }
+
+    function init(){
+        setBalance(getBalance())
+        renderLogs()
+    }
+    init()
+</script>
+</body>
+</html>
