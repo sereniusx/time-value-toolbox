@@ -5,223 +5,1285 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>时间价值工具箱</title>
     <style>
+        :root{
+            /* 极简白底 */
+            --bg1:#ffffff;
+            --bg2:#f6f7f9;
+
+            /* 卡片与描边（黑白系） */
+            --card: rgba(255,255,255,.92);
+            --card2: rgba(255,255,255,.84);
+            --stroke: rgba(17,24,39,.10);
+
+            /* 文字（深灰） */
+            --text: rgba(17,24,39,.92);
+            --muted: rgba(17,24,39,.62);
+            --muted2: rgba(17,24,39,.48);
+
+            /* 状态色（保留但更克制） */
+            --good: rgba(16,185,129,.85);
+            --warn: rgba(245,158,11,.85);
+            --bad:  rgba(239,68,68,.85);
+
+            --shadow: 0 10px 28px rgba(0,0,0,.08);
+            --radius: 18px;
+        }
+
+        *{ box-sizing: border-box; }
+        html,body{ height:100%; }
         body{
-            font-family: -apple-system,BlinkMacSystemFont;
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 20px;
-            background:#f8fafc;
+            margin:0;
+            font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+            color: var(--text);
+            background: var(--bg1);
+            overflow-x: hidden;
         }
-        h1{margin-bottom:10px;}
+
+        /* ✅ 固定背景层：不随滚动（极简） */
+        .bg{
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(180deg, var(--bg1), var(--bg2));
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        .wrap{
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 20px 16px 64px;
+        }
+
+        /* Top bar（改成白底半透明） */
+        .topbar{
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 12px 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.62));
+            border-bottom: 1px solid rgba(17,24,39,.08);
+        }
+
+        header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap: 14px;
+            padding: 6px 0 10px;
+        }
+        .title{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+        }
+        h1{
+            margin:0;
+            font-size: 20px;
+            letter-spacing:.4px;
+            line-height:1.2;
+        }
+        .subtitle{
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.45;
+            max-width: 720px;
+        }
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(17,24,39,.10);
+            color: var(--muted);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Nav（黑白系） */
+        .nav{
+            display:flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items:center;
+            padding-bottom: 6px;
+        }
+        .navbtn{
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(17,24,39,.12);
+            background: rgba(255,255,255,.72);
+            color: rgba(17,24,39,.78);
+            font-size: 12px;
+            cursor: pointer;
+            user-select:none;
+            transition: transform .05s ease, background .15s ease, border-color .15s ease;
+        }
+        .navbtn:hover{ background: rgba(255,255,255,.92); }
+        .navbtn:active{ transform: translateY(1px); }
+        .navbtn.active{
+            background: rgba(17,24,39,.92);
+            border-color: rgba(17,24,39,.92);
+            color: rgba(255,255,255,.96);
+        }
+
+        /* Layout */
+        .grid{
+            display:grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        @media (max-width: 960px){
+            .grid{ grid-template-columns: 1fr; }
+            header{ flex-direction: column; align-items:flex-start; }
+            .pill{ align-self: flex-start; }
+        }
+
         .card{
-            background:white;
-            padding:20px;
-            margin-bottom:20px;
-            border-radius:12px;
-            box-shadow:0 4px 12px rgba(0,0,0,0.05);
+            background: linear-gradient(180deg, var(--card), var(--card2));
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 16px;
         }
-        input,select,button{
-            padding:8px;
-            margin:5px 0;
+
+        .card h2{
+            margin:0;
+            font-size: 16px;
+            letter-spacing: .2px;
         }
+        .desc{
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .row{
+            display:flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        label{
+            color: var(--muted);
+            font-size: 12px;
+            display:block;
+            margin: 10px 0 6px;
+        }
+
+        input, select, textarea{
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(17,24,39,.14);
+            background: rgba(255,255,255,.88);
+            color: var(--text);
+            outline: none;
+            transition: border .15s ease;
+        }
+        input:focus, select:focus, textarea:focus{
+            border-color: rgba(17,24,39,.40);
+        }
+        input::placeholder, textarea::placeholder{
+            color: rgba(17,24,39,.35);
+        }
+
+        .btns{
+            display:flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
         button{
-            background:#111;
-            color:white;
-            border:none;
-            cursor:pointer;
+            border: 0;
+            border-radius: 14px;
+            padding: 10px 12px;
+            cursor: pointer;
+            color: rgba(17,24,39,.92);
+            background: rgba(255,255,255,.92);
+            border: 1px solid rgba(17,24,39,.14);
+            transition: transform .05s ease, opacity .15s ease, background .15s ease;
+            font-size: 13px;
         }
-        button:hover{opacity:.8}
-        .small{font-size:13px;color:#666}
-        .log{
-            border-bottom:1px solid #eee;
-            padding:10px 0;
+        button:hover{ background: rgba(255,255,255,1); }
+        button:active{ transform: translateY(1px); }
+
+        .primary{
+            background: rgba(17,24,39,.92);
+            border: 1px solid rgba(17,24,39,.92);
+            color: rgba(255,255,255,.96);
         }
-        .ai{
-            background:#f1f5f9;
-            padding:8px;
-            margin-top:6px;
-            border-radius:8px;
-            font-size:13px;
+        .primary:hover{ background: rgba(17,24,39,1); }
+
+        .danger{
+            background: rgba(239,68,68,.10);
+            border: 1px solid rgba(239,68,68,.22);
+            color: rgba(17,24,39,.92);
         }
-        .balance{
-            font-size:22px;
-            font-weight:bold;
+
+        .chip{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(17,24,39,.12);
+            background: rgba(255,255,255,.86);
+            color: var(--muted);
+            font-size: 12px;
+            user-select: none;
         }
+
+        .big-balance{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(17,24,39,.10);
+            background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+            margin-top: 12px;
+        }
+        .big-balance .num{
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            line-height: 1;
+        }
+        .big-balance .unit{
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 6px;
+        }
+
+        .kpi{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .kpi .box{
+            border-radius: 16px;
+            border: 1px solid rgba(17,24,39,.10);
+            background: rgba(255,255,255,.88);
+            padding: 12px;
+        }
+        .kpi .name{ color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+        .kpi .val{ font-size: 18px; font-weight: 700; }
+        .kpi .hint{ margin-top: 6px; font-size: 12px; color: var(--muted2); line-height: 1.4; }
+
+        .list{
+            margin-top: 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(17,24,39,.10);
+            overflow:hidden;
+        }
+        .item{
+            padding: 12px 12px;
+            background: rgba(255,255,255,.88);
+            border-bottom: 1px solid rgba(17,24,39,.08);
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap: 12px;
+        }
+        .item:last-child{ border-bottom:0; }
+        .left{ display:flex; flex-direction:column; gap: 6px; min-width:0; }
+        .topline{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .tag{
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid rgba(17,24,39,.12);
+            background: rgba(255,255,255,.92);
+            color: rgba(17,24,39,.82);
+        }
+        .tag.learn,.tag.work,.tag.rest,.tag.cost{ border-color: rgba(17,24,39,.14); background: rgba(255,255,255,.92); }
+
+        .meta{ color: var(--muted); font-size: 12px; }
+        .note{
+            color: rgba(17,24,39,.86);
+            font-size: 13px;
+            line-height: 1.45;
+            word-break: break-word;
+            opacity: .95;
+        }
+        .right{ text-align:right; flex-shrink:0; min-width: 140px; }
+        .money{ font-weight: 800; font-size: 14px; }
+        .submoney{ margin-top: 6px; color: var(--muted2); font-size: 12px; line-height: 1.35; }
+
+        .hintline{ margin-top: 10px; color: var(--muted2); font-size: 12px; line-height: 1.45; }
+
+        .toast{
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            background: rgba(17,24,39,.92);
+            border: 1px solid rgba(17,24,39,.92);
+            color: rgba(255,255,255,.96);
+            padding: 10px 12px;
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.18);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            font-size: 13px;
+            display:none;
+            max-width: 90vw;
+            white-space: nowrap;
+            overflow:hidden;
+            text-overflow: ellipsis;
+            z-index: 999;
+        }
+
+        .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+        .footer{
+            margin-top: 18px;
+            color: var(--muted2);
+            font-size: 12px;
+            text-align: center;
+            padding-bottom: 10px;
+        }
+
+        /* Sections */
+        .section{ display:none; }
+        .section.active{ display:block; }
     </style>
 </head>
+
 <body>
+<div class="bg" aria-hidden="true"></div>
 
-<h1>时间价值工具箱</h1>
+<div class="topbar">
+    <div class="wrap">
+        <header>
+            <div class="title">
+                <h1>时间价值工具箱</h1>
+                <div class="subtitle">
+                    把“时间”当成一种资产来管理：用时薪折算价值，记录行为并累积“时间价值余额”（等价价值，不是现金）。
+                </div>
+            </div>
+            <div class="pill">本地模式 · 数据仅存于本浏览器 localStorage</div>
+        </header>
 
-<div class="card">
-    <h3>时薪设置</h3>
-    <input type="number" id="hourly" placeholder="输入有效时薪 (B)" />
-    <button onclick="saveSettings()">保存</button>
+        <div class="nav" id="nav">
+            <div class="navbtn active" data-target="sec-dashboard">仪表盘</div>
+            <div class="navbtn" data-target="sec-calc">计算器</div>
+            <div class="navbtn" data-target="sec-log">新增记录</div>
+            <div class="navbtn" data-target="sec-ledger">账本</div>
+            <div class="navbtn" data-target="sec-settings">设置</div>
+            <div class="navbtn" data-target="sec-data">数据</div>
+            <div class="navbtn" data-target="sec-about">说明</div>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <h3>时间 ⇄ 金钱换算</h3>
-    <input type="number" id="minutes" placeholder="输入分钟" />
-    <button onclick="convert()">换算</button>
-    <div id="convertResult"></div>
+<div class="wrap">
+
+    <!-- 仪表盘 -->
+    <section class="section active" id="sec-dashboard">
+        <div class="grid">
+            <div class="card">
+                <h2>仪表盘</h2>
+                <div class="desc">你的时间价值余额与近 14 天基础统计。</div>
+
+                <div class="big-balance">
+                    <div>
+                        <div class="num" id="balance">0.00</div>
+                        <div class="unit">时间价值余额（元等价）</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="chip">存储：localStorage</div>
+                        <div class="chip" style="margin-top:6px;">keys：tv.*.v1</div>
+                    </div>
+                </div>
+
+                <div class="kpi">
+                    <div class="box">
+                        <div class="name">近 14 天记录数</div>
+                        <div class="val" id="kpiCount">0</div>
+                        <div class="hint">帮助你判断：是不是在持续记录。</div>
+                    </div>
+                    <div class="box">
+                        <div class="name">近 14 天总时长</div>
+                        <div class="val" id="kpiMins">0 分钟</div>
+                        <div class="hint">观察时间分配规模。</div>
+                    </div>
+                    <div class="box">
+                        <div class="name">近 14 天“学习+工作”占比</div>
+                        <div class="val" id="kpiFocus">0%</div>
+                        <div class="hint">建设性时间的比例。</div>
+                    </div>
+                    <div class="box">
+                        <div class="name">近 14 天时间价值（按默认时薪）</div>
+                        <div class="val" id="kpiValue">0.00</div>
+                        <div class="hint">等价价值，不是收入。</div>
+                    </div>
+                </div>
+
+                <div class="hintline">
+                    建议日常使用流程：先设置时薪 → 用“新增记录”记行为 → 在仪表盘看 14 天趋势 → 再逐步加 AI。
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>最近记录</h2>
+                <div class="desc">展示最近 8 条（方便快速回看）。</div>
+                <div class="list" id="recentList"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 计算器 -->
+    <section class="section" id="sec-calc">
+        <div class="grid">
+            <div class="card">
+                <h2>时间 ⇄ 金钱换算</h2>
+                <div class="desc">把某段时间换算成等价价值（选择 A/B/C 时薪）。</div>
+
+                <div class="row" style="margin-top:10px;">
+                    <div style="flex:1; min-width: 220px;">
+                        <label>分钟</label>
+                        <input type="number" id="minutes" placeholder="例如 45" />
+                    </div>
+                    <div style="width: 220px; flex:0 0 220px;">
+                        <label>使用时薪</label>
+                        <select id="convertRate">
+                            <option value="B">B 有效时薪</option>
+                            <option value="A">A 标准时薪</option>
+                            <option value="C">C 私人时间</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btns">
+                    <button class="primary" id="btnConvert">换算</button>
+                    <button id="btnConvertClear">清空</button>
+                </div>
+
+                <div class="hintline" id="convertResult"></div>
+            </div>
+
+            <div class="card">
+                <h2>回本计算</h2>
+                <div class="desc">成本 ÷（每月节省时间 × 时薪）= 回本月数。</div>
+
+                <div class="row" style="margin-top:10px;">
+                    <div style="flex:1; min-width: 220px;">
+                        <label>成本（元）</label>
+                        <input type="number" id="cost" placeholder="例如 399" />
+                    </div>
+                    <div style="flex:1; min-width: 220px;">
+                        <label>每月节省时间（分钟）</label>
+                        <input type="number" id="saveTime" placeholder="例如 120" />
+                    </div>
+                    <div style="width: 220px; flex:0 0 220px;">
+                        <label>使用时薪</label>
+                        <select id="breakevenRate">
+                            <option value="B">B 有效时薪</option>
+                            <option value="A">A 标准时薪</option>
+                            <option value="C">C 私人时间</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btns">
+                    <button class="primary" id="btnBreakeven">计算回本</button>
+                    <button id="btnBreakevenClear">清空</button>
+                </div>
+
+                <div class="hintline" id="breakevenResult"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 新增记录 -->
+    <section class="section" id="sec-log">
+        <div class="card">
+            <h2>新增行为记录</h2>
+            <div class="desc">
+                记录学习/恢复/工作/消费等行为。系统会按你的“余额累计规则”决定是否自动累积余额。
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+                <div style="flex:1; min-width: 220px;">
+                    <label>类型</label>
+                    <select id="type">
+                        <option value="学习">学习 / 读书（延迟收益）</option>
+                        <option value="恢复">恢复 / 休闲（恢复精力）</option>
+                        <option value="工作">工作 / 产出（直接收益）</option>
+                        <option value="消费">消费（花钱换体验/省事）</option>
+                    </select>
+                </div>
+                <div style="width: 220px; flex:0 0 220px;">
+                    <label>时长（分钟）</label>
+                    <input type="number" id="duration" placeholder="例如 30" />
+                </div>
+                <div style="flex:1; min-width: 260px;">
+                    <label>备注</label>
+                    <input type="text" id="note" placeholder="例如：读《原则》/ 写方案 / 散步" />
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:6px;">
+                <div style="width: 220px; flex:0 0 220px;">
+                    <label>恢复分（0-5，可选）</label>
+                    <input type="number" id="recoverScore" placeholder="例如 3" min="0" max="5" />
+                </div>
+                <div style="width: 220px; flex:0 0 220px;">
+                    <label>资产分（0-5，可选）</label>
+                    <input type="number" id="assetScore" placeholder="例如 4" min="0" max="5" />
+                </div>
+                <div style="flex:1; min-width: 260px;">
+                    <label>是否有输出（可选）</label>
+                    <select id="hasOutput">
+                        <option value="unknown">未标记</option>
+                        <option value="yes">有（写了/产出了/推进了）</option>
+                        <option value="no">无（纯吸收/纯休息/无产出）</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:6px;">
+                <div style="width: 240px; flex:0 0 240px;">
+                    <label>本次价值按哪个时薪算</label>
+                    <select id="logRate">
+                        <option value="B">B 有效时薪</option>
+                        <option value="A">A 标准时薪</option>
+                        <option value="C">C 私人时间</option>
+                    </select>
+                </div>
+
+                <div style="flex:1; min-width: 280px;">
+                    <label>本次行为价值预览</label>
+                    <div class="hintline">
+                        <span class="chip">预估：</span>
+                        <span class="mono" id="logValuePreview">0.00</span>
+                        <span class="chip" style="margin-left:8px;">按所选时薪</span>
+                    </div>
+                    <div class="hintline" id="logValueRuleHint"></div>
+                </div>
+            </div>
+
+            <div class="btns">
+                <button class="primary" id="btnAddLog">保存记录</button>
+                <button id="btnQuickAdd10">+10 分钟</button>
+                <button id="btnQuickAdd30">+30 分钟</button>
+                <button id="btnQuickAdd60">+60 分钟</button>
+            </div>
+
+            <div class="hintline">
+                小建议：先把“记录习惯”建立起来，标签不必完美。后续再考虑 AI 放在“日结/周复盘/建议摘要”等环节。
+            </div>
+        </div>
+    </section>
+
+    <!-- 账本 -->
+    <section class="section" id="sec-ledger">
+        <div class="card">
+            <h2>行为账本</h2>
+            <div class="desc">筛选、搜索、查看最近记录。默认显示最近 100 条。</div>
+
+            <div class="row" style="margin-top:10px;">
+                <div style="flex:1; min-width: 220px;">
+                    <label>筛选类型</label>
+                    <select id="filterType">
+                        <option value="all">全部</option>
+                        <option value="学习">学习</option>
+                        <option value="恢复">恢复</option>
+                        <option value="工作">工作</option>
+                        <option value="消费">消费</option>
+                    </select>
+                </div>
+                <div style="flex:1; min-width: 260px;">
+                    <label>搜索备注关键词</label>
+                    <input type="text" id="searchText" placeholder="例如：读书 / 方案 / 散步" />
+                </div>
+                <div style="width: 220px; flex:0 0 220px;">
+                    <label>显示数量</label>
+                    <select id="limit">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="200">200</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btns">
+                <button id="btnRefresh">刷新列表</button>
+                <button class="danger" id="btnClearLogs">清空账本</button>
+            </div>
+
+            <div class="list" id="logs"></div>
+        </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="section" id="sec-settings">
+        <div class="grid">
+            <div class="card">
+                <h2>时薪与规则设置</h2>
+                <div class="desc">
+                    建议先设定三种时薪：
+                    <span class="chip">A 标准时薪</span>
+                    <span class="chip">B 有效时薪（推荐）</span>
+                    <span class="chip">C 私人时间定价</span>
+                </div>
+
+                <div class="row" style="margin-top:12px;">
+                    <div style="flex:1; min-width: 220px;">
+                        <label>时薪 A（标准）</label>
+                        <input type="number" id="hourlyA" placeholder="例如 120" />
+                    </div>
+                    <div style="flex:1; min-width: 220px;">
+                        <label>时薪 B（有效 · 推荐）</label>
+                        <input type="number" id="hourlyB" placeholder="例如 90" />
+                    </div>
+                    <div style="flex:1; min-width: 220px;">
+                        <label>时薪 C（私人时间）</label>
+                        <input type="number" id="hourlyC" placeholder="例如 200" />
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top:8px;">
+                    <div style="flex:1; min-width: 260px;">
+                        <label>余额累计规则</label>
+                        <select id="balanceRule">
+                            <option value="learn_work">学习/工作计入，恢复/消费不计入（推荐）</option>
+                            <option value="all_positive">除消费外都计入（学习/工作/恢复）</option>
+                            <option value="manual">仅手动转入（记录不自动累积）</option>
+                        </select>
+                        <div class="hintline">这决定“新增记录”时是否自动把本次等价价值加入余额。</div>
+                    </div>
+
+                    <div style="flex:1; min-width: 260px;">
+                        <label>默认换算时薪</label>
+                        <select id="defaultRate">
+                            <option value="B">使用 B（有效时薪）</option>
+                            <option value="A">使用 A（标准时薪）</option>
+                            <option value="C">使用 C（私人时间）</option>
+                        </select>
+                        <div class="hintline">换算/回本/新增记录默认用哪个时薪。</div>
+                    </div>
+                </div>
+
+                <div class="btns">
+                    <button class="primary" id="btnSaveSettings">保存设置</button>
+                    <button id="btnLoadSettings">读取已保存设置</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>快捷操作</h2>
+                <div class="desc">一些常用的小操作。</div>
+                <div class="btns">
+                    <button id="btnZeroBalance">余额归零</button>
+                    <button id="btnRecalcKPIs">重算仪表盘</button>
+                </div>
+                <div class="hintline">
+                    余额归零仅影响 tv.balance.v1，不会删除账本记录。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 数据 -->
+    <section class="section" id="sec-data">
+        <div class="card">
+            <h2>数据管理</h2>
+            <div class="desc">导出/导入/重置，便于备份与迁移。</div>
+            <div class="btns">
+                <button id="btnExport">导出 JSON</button>
+                <button id="btnImport">导入 JSON</button>
+                <button class="danger" id="btnReset">重置全部数据</button>
+            </div>
+            <div class="hintline">
+                导出会包含：设置（settings）/ 账本（logs）/ 余额（balance）。导入会覆盖本地数据。
+            </div>
+        </div>
+    </section>
+
+    <!-- 说明 -->
+    <section class="section" id="sec-about">
+        <div class="card">
+            <h2>说明（更清晰的逻辑）</h2>
+            <div class="desc">
+                <div class="hintline">
+                    <b>时间价值余额</b>：用时薪把你的时间折算为“等价价值”，它不是现金收入，而是帮助你判断“是否值得”。
+                </div>
+                <div class="hintline">
+                    <b>三种时薪 A/B/C</b>：A 更偏市场/岗位；B 更贴近你真实可支配时间（推荐）；C 表示你的私人时间底价。
+                </div>
+                <div class="hintline">
+                    <b>行为账本</b>：记录行为 + 标签（恢复分/资产分/输出），便于后续统计与复盘。
+                </div>
+                <div class="hintline">
+                    <b>为什么先不加 AI</b>：先把数据结构与体验打磨顺，之后再把 AI 放在“摘要/日结/周复盘/策略建议”等更有价值的位置。
+                </div>
+                <div class="hintline">
+                    数据存储：<span class="mono">tv.settings.v1 / tv.logs.v1 / tv.balance.v1</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            这是一版“导航化、好用优先”的基础产品壳。你用一段时间后，我们再讨论 AI 插入点与复盘模块深化。
+        </div>
+    </section>
 </div>
 
-<div class="card">
-    <h3>回本计算</h3>
-    <input type="number" id="cost" placeholder="成本" />
-    <input type="number" id="saveTime" placeholder="每月节省分钟" />
-    <button onclick="breakeven()">计算</button>
-    <div id="breakevenResult"></div>
-</div>
-
-<div class="card">
-    <h3>时间价值余额</h3>
-    <div class="balance" id="balance">0</div>
-</div>
-
-<div class="card">
-    <h3>新增行为记录</h3>
-    <select id="type">
-        <option value="学习">学习</option>
-        <option value="恢复">恢复</option>
-        <option value="工作">工作</option>
-        <option value="消费">消费</option>
-    </select>
-    <input type="number" id="duration" placeholder="分钟" />
-    <input type="text" id="note" placeholder="备注" />
-    <button onclick="addLog()">保存记录</button>
-</div>
-
-<div class="card">
-    <h3>行为账本</h3>
-    <div id="logs"></div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-    const SETTINGS_KEY="tv.settings.v1"
-    const LOGS_KEY="tv.logs.v1"
-    const BALANCE_KEY="tv.balance.v1"
-    const aiEndpoint="/api/chat"
+    // ===== Storage Keys (v1) =====
+    const SETTINGS_KEY = "tv.settings.v1";
+    const LOGS_KEY     = "tv.logs.v1";
+    const BALANCE_KEY  = "tv.balance.v1";
 
+    // ===== Defaults =====
+    const DEFAULT_SETTINGS = {
+        hourlyA: 120,
+        hourlyB: 90,
+        hourlyC: 200,
+        balanceRule: "learn_work", // learn_work | all_positive | manual
+        defaultRate: "B"
+    };
+
+    // ===== Helpers =====
+    const $ = (id) => document.getElementById(id);
+
+    function nowISO(){ return new Date().toISOString(); }
+    function toLocalDateTime(iso){ return new Date(iso).toLocaleString(); }
+    function clamp(n, min, max){
+        if (Number.isNaN(n)) return null;
+        return Math.max(min, Math.min(max, n));
+    }
+    function money(n){ return (Number(n||0)).toFixed(2); }
+
+    function escapeHtml(str){
+        return String(str)
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;")
+            .replaceAll("'","&#039;");
+    }
+
+    // ===== Toast =====
+    let toastTimer = null;
+    function toast(msg){
+        const t = $("toast");
+        t.textContent = msg;
+        t.style.display = "block";
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(()=> t.style.display="none", 1800);
+    }
+
+    // ===== Settings =====
     function getSettings(){
-        return JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}")
+        try{
+            const raw = localStorage.getItem(SETTINGS_KEY);
+            if(!raw) return {...DEFAULT_SETTINGS};
+            return {...DEFAULT_SETTINGS, ...JSON.parse(raw)};
+        }catch{
+            return {...DEFAULT_SETTINGS};
+        }
     }
+
+    function applySettingsToUI(s){
+        // settings section inputs
+        if($("hourlyA")) $("hourlyA").value = s.hourlyA ?? "";
+        if($("hourlyB")) $("hourlyB").value = s.hourlyB ?? "";
+        if($("hourlyC")) $("hourlyC").value = s.hourlyC ?? "";
+        if($("balanceRule")) $("balanceRule").value = s.balanceRule ?? "learn_work";
+        if($("defaultRate")) $("defaultRate").value = s.defaultRate ?? "B";
+
+        // default selections on calc/log pages
+        if($("convertRate")) $("convertRate").value = s.defaultRate ?? "B";
+        if($("breakevenRate")) $("breakevenRate").value = s.defaultRate ?? "B";
+        if($("logRate")) $("logRate").value = s.defaultRate ?? "B";
+    }
+
     function saveSettings(){
-        const hourly=parseFloat(document.getElementById("hourly").value)
-        localStorage.setItem(SETTINGS_KEY,JSON.stringify({hourly}))
-        alert("保存成功")
-    }
-    function getHourly(){
-        return getSettings().hourly||0
+        const prev = getSettings();
+        const hourlyA = parseFloat(($("hourlyA")?.value) || "");
+        const hourlyB = parseFloat(($("hourlyB")?.value) || "");
+        const hourlyC = parseFloat(($("hourlyC")?.value) || "");
+        const balanceRule = $("balanceRule")?.value || prev.balanceRule;
+        const defaultRate = $("defaultRate")?.value || prev.defaultRate;
+
+        const next = {
+            ...prev,
+            hourlyA: Number.isFinite(hourlyA) ? hourlyA : prev.hourlyA,
+            hourlyB: Number.isFinite(hourlyB) ? hourlyB : prev.hourlyB,
+            hourlyC: Number.isFinite(hourlyC) ? hourlyC : prev.hourlyC,
+            balanceRule,
+            defaultRate
+        };
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+        applySettingsToUI(next);
+        recalcAll();
+        toast("已保存设置");
     }
 
-    function convert(){
-        const mins=parseFloat(document.getElementById("minutes").value)
-        const money=(mins/60)*getHourly()
-        document.getElementById("convertResult").innerText=
-            money?`≈ ${money.toFixed(2)} 元`:"请输入"
+    function rateOf(code, s){
+        if(code === "A") return Number(s.hourlyA || 0);
+        if(code === "B") return Number(s.hourlyB || 0);
+        if(code === "C") return Number(s.hourlyC || 0);
+        return 0;
     }
 
-    function breakeven(){
-        const cost=parseFloat(document.getElementById("cost").value)
-        const mins=parseFloat(document.getElementById("saveTime").value)
-        const monthly=(mins/60)*getHourly()
-        if(!monthly)return
-        const months=cost/monthly
-        document.getElementById("breakevenResult").innerText=
-            `约 ${months.toFixed(1)} 个月回本`
-    }
-
-    function getLogs(){
-        return JSON.parse(localStorage.getItem(LOGS_KEY)||"[]")
-    }
-    function saveLogs(logs){
-        localStorage.setItem(LOGS_KEY,JSON.stringify(logs))
-    }
+    // ===== Balance =====
     function getBalance(){
-        return parseFloat(localStorage.getItem(BALANCE_KEY)||"0")
+        const v = parseFloat(localStorage.getItem(BALANCE_KEY) || "0");
+        return Number.isFinite(v) ? v : 0;
     }
     function setBalance(v){
-        localStorage.setItem(BALANCE_KEY,v)
-        document.getElementById("balance").innerText=v.toFixed(2)
+        const n = Number(v || 0);
+        localStorage.setItem(BALANCE_KEY, String(n));
+        if($("balance")) $("balance").textContent = money(n);
     }
 
-    async function addLog(){
-        const type=document.getElementById("type").value
-        const duration=parseFloat(document.getElementById("duration").value)
-        const note=document.getElementById("note").value
-        if(!duration)return
+    // ===== Logs =====
+    function getLogs(){
+        try{ return JSON.parse(localStorage.getItem(LOGS_KEY) || "[]"); }
+        catch{ return []; }
+    }
+    function saveLogs(logs){
+        localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
+    }
 
-        const value=(duration/60)*getHourly()
-        const balance=getBalance()+value
-        setBalance(balance)
+    function shouldAutoAddToBalance(type, rule){
+        if(rule === "learn_work") return type === "学习" || type === "工作";
+        if(rule === "all_positive") return type !== "消费";
+        return false; // manual
+    }
 
-        const log={
-            id:Date.now(),
+    function computeValue(mins, hourly){
+        const m = Number(mins || 0);
+        const h = Number(hourly || 0);
+        if(m <= 0 || h <= 0) return 0;
+        return (m / 60) * h;
+    }
+
+    // ===== Navigation =====
+    function activateSection(id){
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        const target = document.getElementById(id);
+        if(target) target.classList.add("active");
+
+        document.querySelectorAll(".navbtn").forEach(b => b.classList.remove("active"));
+        const btn = document.querySelector(`.navbtn[data-target="${id}"]`);
+        if(btn) btn.classList.add("active");
+
+        // When navigating, refresh relevant renders
+        recalcAll();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ===== Convert =====
+    function convert(){
+        const s = getSettings();
+        const mins = parseFloat($("minutes").value);
+        const code = $("convertRate").value;
+        const hourly = rateOf(code, s);
+
+        if(!Number.isFinite(mins) || mins <= 0){
+            $("convertResult").textContent = "请输入分钟数（>0）。";
+            return;
+        }
+        if(hourly <= 0){
+            $("convertResult").textContent = "请先在【设置】中设置对应时薪。";
+            return;
+        }
+        const v = computeValue(mins, hourly);
+        $("convertResult").textContent = `≈ ${money(v)} 元（按 ${code} 时薪 ${hourly}/h）`;
+    }
+    function clearConvert(){
+        $("minutes").value = "";
+        $("convertResult").textContent = "";
+    }
+
+    // ===== Breakeven =====
+    function breakeven(){
+        const s = getSettings();
+        const cost = parseFloat($("cost").value);
+        const saveMins = parseFloat($("saveTime").value);
+        const code = $("breakevenRate").value;
+        const hourly = rateOf(code, s);
+
+        if(!Number.isFinite(cost) || cost <= 0){
+            $("breakevenResult").textContent = "请输入成本（>0）。";
+            return;
+        }
+        if(!Number.isFinite(saveMins) || saveMins <= 0){
+            $("breakevenResult").textContent = "请输入每月节省分钟数（>0）。";
+            return;
+        }
+        if(hourly <= 0){
+            $("breakevenResult").textContent = "请先在【设置】中设置对应时薪。";
+            return;
+        }
+        const monthlyValue = computeValue(saveMins, hourly);
+        const months = monthlyValue > 0 ? (cost / monthlyValue) : Infinity;
+        $("breakevenResult").textContent =
+            `约 ${months.toFixed(1)} 个月回本（每月节省 ≈ ${money(monthlyValue)} 元等价，按 ${code} 时薪 ${hourly}/h）`;
+    }
+    function clearBreakeven(){
+        $("cost").value = "";
+        $("saveTime").value = "";
+        $("breakevenResult").textContent = "";
+    }
+
+    // ===== Add Log =====
+    function updateLogPreview(){
+        const s = getSettings();
+        const type = $("type").value;
+        const mins = parseFloat($("duration").value);
+        const code = $("logRate").value;
+        const hourly = rateOf(code, s);
+        const v = (Number.isFinite(mins) && mins > 0) ? computeValue(mins, hourly) : 0;
+        $("logValuePreview").textContent = money(v);
+
+        const rule = s.balanceRule;
+        const auto = shouldAutoAddToBalance(type, rule);
+        let text = "";
+        if(rule === "manual") text = "当前规则：仅手动转入（保存记录不会自动累积余额）。";
+        else text = auto
+            ? `当前规则：该类型会自动计入余额（保存后余额 +${money(v)}）。`
+            : "当前规则：该类型默认不计入余额（只记录不累积）。";
+        $("logValueRuleHint").textContent = text;
+    }
+
+    function addMinutes(delta){
+        const current = parseFloat($("duration").value || "0");
+        const next = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+        $("duration").value = next;
+        updateLogPreview();
+    }
+
+    function addLog(){
+        const s = getSettings();
+        const type = $("type").value;
+        const duration = parseFloat($("duration").value);
+        const note = ($("note").value || "").trim();
+
+        if(!Number.isFinite(duration) || duration <= 0){
+            toast("请输入时长（分钟）> 0");
+            return;
+        }
+
+        const recoverScore = clamp(parseFloat($("recoverScore").value), 0, 5);
+        const assetScore   = clamp(parseFloat($("assetScore").value), 0, 5);
+        const hasOutput    = $("hasOutput").value;
+
+        const rateCode = $("logRate").value;
+        const hourly = rateOf(rateCode, s);
+        const value = computeValue(duration, hourly);
+
+        const log = {
+            id: Date.now(),
+            at: nowISO(),
             type,
             duration,
             note,
-            value,
-            date:new Date().toLocaleDateString()
+            recoverScore,
+            assetScore,
+            hasOutput,
+            rateCode,
+            hourly,
+            value
+        };
+
+        const logs = getLogs();
+        logs.unshift(log);
+        saveLogs(logs);
+
+        if(shouldAutoAddToBalance(type, s.balanceRule) && value > 0){
+            setBalance(getBalance() + value);
         }
 
-        renderLoading()
+        // reset fields
+        $("note").value = "";
+        $("recoverScore").value = "";
+        $("assetScore").value = "";
+        $("hasOutput").value = "unknown";
+        $("duration").value = "";
+        updateLogPreview();
 
-        const ai=await callAI(log)
-
-        log.ai=ai
-
-        const logs=getLogs()
-        logs.unshift(log)
-        saveLogs(logs)
-
-        renderLogs()
+        recalcAll();
+        toast("已保存记录");
+        activateSection("sec-dashboard");
     }
 
-    async function callAI(log){
-        try{
-            const res=await fetch(aiEndpoint,{
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body:JSON.stringify({
-                    messages:[
-                        {role:"system",content:"你是时间管理顾问"},
-                        {role:"user",content:`行为类型:${log.type}, 时长:${log.duration}分钟, 备注:${log.note}，请给简短建议`}
-                    ]
-                })
-            })
-            const data=await res.json()
-            return data.choices?.[0]?.message?.content||""
-        }catch(e){
-            return "AI生成失败"
+    // ===== Ledger Render =====
+    function tagClass(type){
+        if(type === "学习") return "learn";
+        if(type === "工作") return "work";
+        if(type === "恢复") return "rest";
+        return "cost";
+    }
+
+    function renderRecent(){
+        const logs = getLogs().slice(0, 8);
+        const container = $("recentList");
+        if(!container) return;
+
+        if(logs.length === 0){
+            container.innerHTML = `<div class="item"><div class="left"><div class="note">暂无记录</div><div class="meta">去“新增记录”写下第一条吧。</div></div></div>`;
+            return;
         }
-    }
 
-    function renderLoading(){
-        document.getElementById("logs").innerHTML="生成AI建议中..."
+        container.innerHTML = logs.map(l=>{
+            const cls = tagClass(l.type);
+            return `
+        <div class="item">
+          <div class="left">
+            <div class="topline">
+              <span class="tag ${cls}">${l.type}</span>
+              <span class="chip">${l.duration} 分钟</span>
+              <span class="chip">按 ${l.rateCode}</span>
+            </div>
+            ${l.note ? `<div class="note">${escapeHtml(l.note)}</div>` : `<div class="meta">（无备注）</div>`}
+            <div class="meta">${toLocalDateTime(l.at)}</div>
+          </div>
+          <div class="right">
+            <div class="money">${l.value>0?`+ ${money(l.value)}`:`0.00`}</div>
+            <div class="submoney">等价价值</div>
+          </div>
+        </div>
+      `;
+        }).join("");
     }
 
     function renderLogs(){
-        const logs=getLogs()
-        const container=document.getElementById("logs")
-        container.innerHTML=""
-        logs.forEach(l=>{
-            container.innerHTML+=`
-      <div class="log">
-        <strong>${l.type}</strong> - ${l.duration}分钟
-        <div class="small">${l.note||""}</div>
-        <div class="small">价值 ${l.value.toFixed(2)}</div>
-        ${l.ai?`<div class="ai">${l.ai}</div>`:""}
-      </div>
-    `
-        })
+        const logs = getLogs();
+        const limit = parseInt($("limit")?.value || "100", 10);
+        const q = ($("searchText")?.value || "").trim().toLowerCase();
+        const filter = $("filterType")?.value || "all";
+
+        const filtered = logs.filter(l=>{
+            const typeOk = (filter === "all") ? true : l.type === filter;
+            const qOk = q ? ((l.note||"").toLowerCase().includes(q)) : true;
+            return typeOk && qOk;
+        }).slice(0, limit);
+
+        const container = $("logs");
+        if(!container) return;
+
+        if(filtered.length === 0){
+            container.innerHTML = `<div class="item"><div class="left"><div class="note">暂无记录</div><div class="meta">调整筛选条件或新增记录。</div></div></div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(l=>{
+            const cls = tagClass(l.type);
+            const badges = [];
+            if(Number.isFinite(l.recoverScore)) badges.push(`<span class="chip">恢复 ${l.recoverScore}/5</span>`);
+            if(Number.isFinite(l.assetScore)) badges.push(`<span class="chip">资产 ${l.assetScore}/5</span>`);
+            if(l.hasOutput === "yes") badges.push(`<span class="chip">有输出</span>`);
+            if(l.hasOutput === "no") badges.push(`<span class="chip">无输出</span>`);
+
+            return `
+        <div class="item">
+          <div class="left">
+            <div class="topline">
+              <span class="tag ${cls}">${l.type}</span>
+              <span class="chip">${l.duration} 分钟</span>
+              <span class="chip">按 ${l.rateCode}（${l.hourly}/h）</span>
+              ${badges.join("")}
+            </div>
+            ${l.note ? `<div class="note">${escapeHtml(l.note)}</div>` : `<div class="meta">（无备注）</div>`}
+            <div class="meta">${toLocalDateTime(l.at)}</div>
+          </div>
+          <div class="right">
+            <div class="money">${l.value>0?`+ ${money(l.value)} 元`:`0.00`}</div>
+            <div class="submoney">等价价值（非收入）</div>
+          </div>
+        </div>
+      `;
+        }).join("");
     }
 
-    function init(){
-        setBalance(getBalance())
-        renderLogs()
+    // ===== KPIs (14 days) =====
+    function calcKPIs(){
+        const logs = getLogs();
+        const s = getSettings();
+        const days = 14;
+        const since = Date.now() - days * 24 * 60 * 60 * 1000;
+
+        const recent = logs.filter(l=>{
+            const t = new Date(l.at).getTime();
+            return Number.isFinite(t) && t >= since;
+        });
+
+        const count = recent.length;
+        const totalMins = recent.reduce((a,l)=> a + Number(l.duration||0), 0);
+        const focusMins = recent.filter(l => l.type === "学习" || l.type === "工作")
+            .reduce((a,l)=> a + Number(l.duration||0), 0);
+        const focusPct = totalMins > 0 ? (focusMins / totalMins) * 100 : 0;
+
+        const hourly = rateOf(s.defaultRate || "B", s);
+        const value = computeValue(totalMins, hourly);
+
+        if($("kpiCount")) $("kpiCount").textContent = String(count);
+        if($("kpiMins")) $("kpiMins").textContent = `${Math.round(totalMins)} 分钟`;
+        if($("kpiFocus")) $("kpiFocus").textContent = `${focusPct.toFixed(0)}%`;
+        if($("kpiValue")) $("kpiValue").textContent = money(value);
     }
-    init()
+
+    function recalcAll(){
+        setBalance(getBalance());
+        calcKPIs();
+        renderRecent();
+        renderLogs();
+    }
+
+    // ===== Data Tools =====
+    function exportJSON(){
+        const data = {
+            version: 1,
+            exportedAt: nowISO(),
+            settings: getSettings(),
+            balance: getBalance(),
+            logs: getLogs()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `time-value-toolbox-export-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast("已导出 JSON");
+    }
+
+    function importJSON(){
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.onchange = async () => {
+            const file = input.files && input.files[0];
+            if(!file) return;
+            const text = await file.text();
+            try{
+                const data = JSON.parse(text);
+                if(!data || typeof data !== "object") throw new Error("bad");
+                if(!data.settings || !Array.isArray(data.logs)) throw new Error("missing");
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify({...DEFAULT_SETTINGS, ...data.settings}));
+                localStorage.setItem(LOGS_KEY, JSON.stringify(data.logs));
+                localStorage.setItem(BALANCE_KEY, String(Number(data.balance||0)));
+                applySettingsToUI(getSettings());
+                updateLogPreview();
+                recalcAll();
+                toast("已导入并覆盖本地数据");
+            }catch{
+                toast("导入失败：JSON 格式不正确");
+            }
+        };
+        input.click();
+    }
+
+    function resetAll(){
+        const ok = confirm("确定要重置吗？将清空本地设置/账本/余额，无法恢复。");
+        if(!ok) return;
+        localStorage.removeItem(SETTINGS_KEY);
+        localStorage.removeItem(LOGS_KEY);
+        localStorage.removeItem(BALANCE_KEY);
+        applySettingsToUI(getSettings());
+        updateLogPreview();
+        recalcAll();
+        toast("已重置");
+    }
+
+    function clearLogs(){
+        const ok = confirm("确定清空账本吗？仅清空 logs，余额与设置不变。");
+        if(!ok) return;
+        localStorage.setItem(LOGS_KEY, "[]");
+        recalcAll();
+        toast("已清空账本");
+    }
+
+    // ===== Init =====
+    function init(){
+        const s = getSettings();
+        applySettingsToUI(s);
+
+        // Nav bindings
+        $("nav").addEventListener("click", (e)=>{
+            const btn = e.target.closest(".navbtn");
+            if(!btn) return;
+            activateSection(btn.dataset.target);
+        });
+
+        // Settings
+        $("btnSaveSettings")?.addEventListener("click", saveSettings);
+        $("btnLoadSettings")?.addEventListener("click", ()=>{
+            applySettingsToUI(getSettings());
+            updateLogPreview();
+            recalcAll();
+            toast("已读取设置");
+        });
+
+        // Calc
+        $("btnConvert")?.addEventListener("click", convert);
+        $("btnConvertClear")?.addEventListener("click", clearConvert);
+        $("btnBreakeven")?.addEventListener("click", breakeven);
+        $("btnBreakevenClear")?.addEventListener("click", clearBreakeven);
+
+        // Log
+        $("type")?.addEventListener("change", updateLogPreview);
+        $("duration")?.addEventListener("input", updateLogPreview);
+        $("logRate")?.addEventListener("change", updateLogPreview);
+        $("btnAddLog")?.addEventListener("click", addLog);
+        $("btnQuickAdd10")?.addEventListener("click", ()=> addMinutes(10));
+        $("btnQuickAdd30")?.addEventListener("click", ()=> addMinutes(30));
+        $("btnQuickAdd60")?.addEventListener("click", ()=> addMinutes(60));
+
+        // Ledger
+        $("filterType")?.addEventListener("change", renderLogs);
+        $("searchText")?.addEventListener("input", renderLogs);
+        $("limit")?.addEventListener("change", renderLogs);
+        $("btnRefresh")?.addEventListener("click", ()=>{ recalcAll(); toast("已刷新"); });
+        $("btnClearLogs")?.addEventListener("click", clearLogs);
+
+        // Data
+        $("btnExport")?.addEventListener("click", exportJSON);
+        $("btnImport")?.addEventListener("click", importJSON);
+        $("btnReset")?.addEventListener("click", resetAll);
+
+        // Quick ops
+        $("btnZeroBalance")?.addEventListener("click", ()=>{
+            const ok = confirm("确定把余额归零吗？账本记录不会删除。");
+            if(!ok) return;
+            setBalance(0);
+            toast("余额已归零");
+        });
+        $("btnRecalcKPIs")?.addEventListener("click", ()=>{
+            recalcAll();
+            toast("已重算");
+        });
+
+        // Initial render
+        setBalance(getBalance());
+        updateLogPreview();
+        recalcAll();
+    }
+
+    init();
 </script>
 </body>
 </html>
