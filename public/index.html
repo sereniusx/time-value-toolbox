@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>时间价值工具箱</title>
+
     <style>
         :root{
             /* 极简白底 */
@@ -20,7 +21,7 @@
             --muted: rgba(17,24,39,.62);
             --muted2: rgba(17,24,39,.48);
 
-            /* 状态色（保留但更克制） */
+            /* 状态色（克制） */
             --good: rgba(16,185,129,.85);
             --warn: rgba(245,158,11,.85);
             --bad:  rgba(239,68,68,.85);
@@ -55,7 +56,7 @@
             padding: 20px 16px 64px;
         }
 
-        /* Top bar（改成白底半透明） */
+        /* Top bar（白底半透明） */
         .topbar{
             position: sticky;
             top: 0;
@@ -89,7 +90,7 @@
             color: var(--muted);
             font-size: 12px;
             line-height: 1.45;
-            max-width: 720px;
+            max-width: 760px;
         }
         .pill{
             display:inline-flex;
@@ -319,11 +320,17 @@
             word-break: break-word;
             opacity: .95;
         }
-        .right{ text-align:right; flex-shrink:0; min-width: 140px; }
+        .right{ text-align:right; flex-shrink:0; min-width: 160px; }
         .money{ font-weight: 800; font-size: 14px; }
         .submoney{ margin-top: 6px; color: var(--muted2); font-size: 12px; line-height: 1.35; }
 
         .hintline{ margin-top: 10px; color: var(--muted2); font-size: 12px; line-height: 1.45; }
+
+        .divider{
+            height:1px;
+            background: rgba(17,24,39,.08);
+            margin: 14px 0;
+        }
 
         .toast{
             position: fixed;
@@ -356,9 +363,36 @@
             padding-bottom: 10px;
         }
 
+        .smallbtn{
+            padding: 8px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
         /* Sections */
         .section{ display:none; }
         .section.active{ display:block; }
+
+        /* AI box */
+        .aiBox{
+            margin-top: 12px;
+            border: 1px dashed rgba(17,24,39,.18);
+            border-radius: 16px;
+            padding: 12px;
+            background: rgba(255,255,255,.88);
+        }
+        .aiOut{
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(17,24,39,.10);
+            background: rgba(255,255,255,.92);
+            color: rgba(17,24,39,.86);
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
 </head>
 
@@ -371,10 +405,10 @@
             <div class="title">
                 <h1>时间价值工具箱</h1>
                 <div class="subtitle">
-                    把“时间”当成一种资产来管理：用时薪折算价值，记录行为并累积“时间价值余额”（等价价值，不是现金）。
+                    把“时间”当成一种资产来管理：用时薪折算价值、记录行为并累积“时间价值余额”（等价价值，不是现金）。
                 </div>
             </div>
-            <div class="pill">本地模式 · 数据仅存于本浏览器 localStorage</div>
+            <div class="pill">Cloudflare Pages · localStorage 本地数据</div>
         </header>
 
         <div class="nav" id="nav">
@@ -404,8 +438,7 @@
                         <div class="unit">时间价值余额（元等价）</div>
                     </div>
                     <div style="text-align:right;">
-                        <div class="chip">存储：localStorage</div>
-                        <div class="chip" style="margin-top:6px;">keys：tv.*.v1</div>
+                        <div class="chip">keys：tv.settings.v1 / tv.logs.v1 / tv.balance.v1</div>
                     </div>
                 </div>
 
@@ -413,17 +446,17 @@
                     <div class="box">
                         <div class="name">近 14 天记录数</div>
                         <div class="val" id="kpiCount">0</div>
-                        <div class="hint">帮助你判断：是不是在持续记录。</div>
+                        <div class="hint">是否在持续记录。</div>
                     </div>
                     <div class="box">
                         <div class="name">近 14 天总时长</div>
                         <div class="val" id="kpiMins">0 分钟</div>
-                        <div class="hint">观察时间分配规模。</div>
+                        <div class="hint">仅统计有时长的记录（消费不计时长）。</div>
                     </div>
                     <div class="box">
                         <div class="name">近 14 天“学习+工作”占比</div>
                         <div class="val" id="kpiFocus">0%</div>
-                        <div class="hint">建设性时间的比例。</div>
+                        <div class="hint">建设性时间比例。</div>
                     </div>
                     <div class="box">
                         <div class="name">近 14 天时间价值（按默认时薪）</div>
@@ -433,7 +466,7 @@
                 </div>
 
                 <div class="hintline">
-                    建议日常使用流程：先设置时薪 → 用“新增记录”记行为 → 在仪表盘看 14 天趋势 → 再逐步加 AI。
+                    使用建议：先在【设置】里确定 A/B/C → 再在【新增记录】持续记录 → 用仪表盘看趋势 → 再逐步引入 AI 复盘。
                 </div>
             </div>
 
@@ -504,6 +537,32 @@
                 </div>
 
                 <div class="hintline" id="breakevenResult"></div>
+
+                <div class="divider"></div>
+
+                <h2 style="font-size:14px;">消费回本（快速）</h2>
+                <div class="desc">把一次消费换算成“需要工作/学习多久才能赚回来”。</div>
+
+                <div class="row" style="margin-top:10px;">
+                    <div style="flex:1; min-width: 220px;">
+                        <label>消费金额（元）</label>
+                        <input type="number" id="spendCostQuick" placeholder="例如 199" />
+                    </div>
+                    <div style="width: 220px; flex:0 0 220px;">
+                        <label>按哪个时薪回本</label>
+                        <select id="spendRateQuick">
+                            <option value="B">B 有效时薪</option>
+                            <option value="A">A 标准时薪</option>
+                            <option value="C">C 私人时间</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="btns">
+                    <button class="primary" id="btnSpendQuick">换算回本时间</button>
+                    <button id="btnSpendQuickClear">清空</button>
+                </div>
+                <div class="hintline" id="spendQuickResult"></div>
             </div>
         </div>
     </section>
@@ -513,7 +572,7 @@
         <div class="card">
             <h2>新增行为记录</h2>
             <div class="desc">
-                记录学习/恢复/工作/消费等行为。系统会按你的“余额累计规则”决定是否自动累积余额。
+                学习/恢复/工作按“时长”记录；消费按“金额”记录并可换算回本时间（不要求填写时长）。
             </div>
 
             <div class="row" style="margin-top:10px;">
@@ -523,16 +582,23 @@
                         <option value="学习">学习 / 读书（延迟收益）</option>
                         <option value="恢复">恢复 / 休闲（恢复精力）</option>
                         <option value="工作">工作 / 产出（直接收益）</option>
-                        <option value="消费">消费（花钱换体验/省事）</option>
+                        <option value="消费">消费（金额换算回本时间）</option>
                     </select>
                 </div>
-                <div style="width: 220px; flex:0 0 220px;">
+
+                <div style="width: 220px; flex:0 0 220px;" id="durationWrap">
                     <label>时长（分钟）</label>
                     <input type="number" id="duration" placeholder="例如 30" />
                 </div>
+
+                <div style="width: 220px; flex:0 0 220px; display:none;" id="costWrap">
+                    <label>消费金额（元）</label>
+                    <input type="number" id="spendCost" placeholder="例如 199" />
+                </div>
+
                 <div style="flex:1; min-width: 260px;">
                     <label>备注</label>
-                    <input type="text" id="note" placeholder="例如：读《原则》/ 写方案 / 散步" />
+                    <input type="text" id="note" placeholder="例如：读《原则》/ 写方案 / 餐饮/会员" />
                 </div>
             </div>
 
@@ -557,7 +623,7 @@
 
             <div class="row" style="margin-top:6px;">
                 <div style="width: 240px; flex:0 0 240px;">
-                    <label>本次价值按哪个时薪算</label>
+                    <label>价值/回本按哪个时薪算</label>
                     <select id="logRate">
                         <option value="B">B 有效时薪</option>
                         <option value="A">A 标准时薪</option>
@@ -566,12 +632,8 @@
                 </div>
 
                 <div style="flex:1; min-width: 280px;">
-                    <label>本次行为价值预览</label>
-                    <div class="hintline">
-                        <span class="chip">预估：</span>
-                        <span class="mono" id="logValuePreview">0.00</span>
-                        <span class="chip" style="margin-left:8px;">按所选时薪</span>
-                    </div>
+                    <label>预览</label>
+                    <div class="hintline" id="logPreviewLine"></div>
                     <div class="hintline" id="logValueRuleHint"></div>
                 </div>
             </div>
@@ -584,7 +646,7 @@
             </div>
 
             <div class="hintline">
-                小建议：先把“记录习惯”建立起来，标签不必完美。后续再考虑 AI 放在“日结/周复盘/建议摘要”等环节。
+                说明：消费记录不必填时长，只记录金额，并展示“需要工作/学习多久回本”。后续再考虑是否要把消费影响纳入余额（比如扣减）。
             </div>
         </div>
     </section>
@@ -608,7 +670,7 @@
                 </div>
                 <div style="flex:1; min-width: 260px;">
                     <label>搜索备注关键词</label>
-                    <input type="text" id="searchText" placeholder="例如：读书 / 方案 / 散步" />
+                    <input type="text" id="searchText" placeholder="例如：读书 / 方案 / 会员" />
                 </div>
                 <div style="width: 220px; flex:0 0 220px;">
                     <label>显示数量</label>
@@ -635,10 +697,7 @@
             <div class="card">
                 <h2>时薪与规则设置</h2>
                 <div class="desc">
-                    建议先设定三种时薪：
-                    <span class="chip">A 标准时薪</span>
-                    <span class="chip">B 有效时薪（推荐）</span>
-                    <span class="chip">C 私人时间定价</span>
+                    A/B/C 是你的“时间定价标尺”。建议先在这里定好，再开始记录。
                 </div>
 
                 <div class="row" style="margin-top:12px;">
@@ -664,7 +723,7 @@
                             <option value="all_positive">除消费外都计入（学习/工作/恢复）</option>
                             <option value="manual">仅手动转入（记录不自动累积）</option>
                         </select>
-                        <div class="hintline">这决定“新增记录”时是否自动把本次等价价值加入余额。</div>
+                        <div class="hintline">决定“新增记录”时是否把本次等价价值加入余额。</div>
                     </div>
 
                     <div style="flex:1; min-width: 260px;">
@@ -674,13 +733,63 @@
                             <option value="A">使用 A（标准时薪）</option>
                             <option value="C">使用 C（私人时间）</option>
                         </select>
-                        <div class="hintline">换算/回本/新增记录默认用哪个时薪。</div>
+                        <div class="hintline">换算/回本/消费回本的默认时薪。</div>
                     </div>
                 </div>
 
                 <div class="btns">
                     <button class="primary" id="btnSaveSettings">保存设置</button>
                     <button id="btnLoadSettings">读取已保存设置</button>
+                </div>
+
+                <div class="aiBox">
+                    <div class="row" style="justify-content:space-between;">
+                        <div>
+                            <b>AI 指导：估算 A/B/C（可选）</b>
+                            <div class="hintline" style="margin-top:6px;">
+                                输入你的基本收入与工作结构，AI 会给出更贴近现实的 A/B/C，并解释为什么这样估算。
+                            </div>
+                        </div>
+                        <div class="chip">调用：/api/chat</div>
+                    </div>
+
+                    <div class="row" style="margin-top:10px;">
+                        <div style="flex:1; min-width: 220px;">
+                            <label>税后月收入（元）</label>
+                            <input type="number" id="aiIncomeMonthly" placeholder="例如 20000" />
+                        </div>
+                        <div style="width: 220px; flex:0 0 220px;">
+                            <label>每周工作天数</label>
+                            <input type="number" id="aiWorkdays" placeholder="例如 5" />
+                        </div>
+                        <div style="width: 220px; flex:0 0 220px;">
+                            <label>每天工作小时</label>
+                            <input type="number" id="aiHoursPerDay" placeholder="例如 8" />
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top:6px;">
+                        <div style="flex:1; min-width: 220px;">
+                            <label>通勤/碎片时间（小时/天，可选）</label>
+                            <input type="number" id="aiCommutePerDay" placeholder="例如 1.5" />
+                        </div>
+                        <div style="flex:1; min-width: 220px;">
+                            <label>每周加班小时（可选）</label>
+                            <input type="number" id="aiOvertimePerWeek" placeholder="例如 5" />
+                        </div>
+                        <div style="flex:1; min-width: 220px;">
+                            <label>私人时间溢价倍数（C≈B×倍数，可选）</label>
+                            <input type="number" id="aiPrivatePremium" placeholder="例如 2" />
+                        </div>
+                    </div>
+
+                    <div class="btns">
+                        <button class="primary" id="btnAiEstimate">让 AI 估算 A/B/C</button>
+                        <button id="btnAiApply" disabled>应用到设置</button>
+                        <button id="btnAiClear">清空</button>
+                    </div>
+
+                    <div class="aiOut" id="aiEstimateOutput" style="display:none;"></div>
                 </div>
             </div>
 
@@ -717,30 +826,20 @@
     <!-- 说明 -->
     <section class="section" id="sec-about">
         <div class="card">
-            <h2>说明（更清晰的逻辑）</h2>
+            <h2>说明</h2>
             <div class="desc">
-                <div class="hintline">
-                    <b>时间价值余额</b>：用时薪把你的时间折算为“等价价值”，它不是现金收入，而是帮助你判断“是否值得”。
-                </div>
-                <div class="hintline">
-                    <b>三种时薪 A/B/C</b>：A 更偏市场/岗位；B 更贴近你真实可支配时间（推荐）；C 表示你的私人时间底价。
-                </div>
-                <div class="hintline">
-                    <b>行为账本</b>：记录行为 + 标签（恢复分/资产分/输出），便于后续统计与复盘。
-                </div>
-                <div class="hintline">
-                    <b>为什么先不加 AI</b>：先把数据结构与体验打磨顺，之后再把 AI 放在“摘要/日结/周复盘/策略建议”等更有价值的位置。
-                </div>
-                <div class="hintline">
-                    数据存储：<span class="mono">tv.settings.v1 / tv.logs.v1 / tv.balance.v1</span>
-                </div>
+                <div class="hintline"><b>余额</b>：等价价值账户，用于决策，不是现金。</div>
+                <div class="hintline"><b>消费</b>：不必填时长，用金额换算“回本时间”。</div>
+                <div class="hintline"><b>AI</b>：当前仅用于“设置页估算 A/B/C”，后续再扩展到周复盘/建议摘要。</div>
+                <div class="hintline">数据 keys：<span class="mono">tv.settings.v1 / tv.logs.v1 / tv.balance.v1</span></div>
             </div>
         </div>
 
         <div class="footer">
-            这是一版“导航化、好用优先”的基础产品壳。你用一段时间后，我们再讨论 AI 插入点与复盘模块深化。
+            先把体验和数据结构跑顺，再做 AI 的“复盘与策略”会更稳。
         </div>
     </section>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -750,6 +849,9 @@
     const SETTINGS_KEY = "tv.settings.v1";
     const LOGS_KEY     = "tv.logs.v1";
     const BALANCE_KEY  = "tv.balance.v1";
+
+    // Pages Functions endpoint
+    const AI_ENDPOINT = "/api/chat";
 
     // ===== Defaults =====
     const DEFAULT_SETTINGS = {
@@ -770,7 +872,6 @@
         return Math.max(min, Math.min(max, n));
     }
     function money(n){ return (Number(n||0)).toFixed(2); }
-
     function escapeHtml(str){
         return String(str)
             .replaceAll("&","&amp;")
@@ -802,26 +903,26 @@
     }
 
     function applySettingsToUI(s){
-        // settings section inputs
-        if($("hourlyA")) $("hourlyA").value = s.hourlyA ?? "";
-        if($("hourlyB")) $("hourlyB").value = s.hourlyB ?? "";
-        if($("hourlyC")) $("hourlyC").value = s.hourlyC ?? "";
-        if($("balanceRule")) $("balanceRule").value = s.balanceRule ?? "learn_work";
-        if($("defaultRate")) $("defaultRate").value = s.defaultRate ?? "B";
+        $("hourlyA").value = s.hourlyA ?? "";
+        $("hourlyB").value = s.hourlyB ?? "";
+        $("hourlyC").value = s.hourlyC ?? "";
+        $("balanceRule").value = s.balanceRule ?? "learn_work";
+        $("defaultRate").value = s.defaultRate ?? "B";
 
         // default selections on calc/log pages
-        if($("convertRate")) $("convertRate").value = s.defaultRate ?? "B";
-        if($("breakevenRate")) $("breakevenRate").value = s.defaultRate ?? "B";
-        if($("logRate")) $("logRate").value = s.defaultRate ?? "B";
+        $("convertRate").value = s.defaultRate ?? "B";
+        $("breakevenRate").value = s.defaultRate ?? "B";
+        $("logRate").value = s.defaultRate ?? "B";
+        $("spendRateQuick").value = s.defaultRate ?? "B";
     }
 
     function saveSettings(){
         const prev = getSettings();
-        const hourlyA = parseFloat(($("hourlyA")?.value) || "");
-        const hourlyB = parseFloat(($("hourlyB")?.value) || "");
-        const hourlyC = parseFloat(($("hourlyC")?.value) || "");
-        const balanceRule = $("balanceRule")?.value || prev.balanceRule;
-        const defaultRate = $("defaultRate")?.value || prev.defaultRate;
+        const hourlyA = parseFloat($("hourlyA").value);
+        const hourlyB = parseFloat($("hourlyB").value);
+        const hourlyC = parseFloat($("hourlyC").value);
+        const balanceRule = $("balanceRule").value || prev.balanceRule;
+        const defaultRate = $("defaultRate").value || prev.defaultRate;
 
         const next = {
             ...prev,
@@ -852,7 +953,7 @@
     function setBalance(v){
         const n = Number(v || 0);
         localStorage.setItem(BALANCE_KEY, String(n));
-        if($("balance")) $("balance").textContent = money(n);
+        $("balance").textContent = money(n);
     }
 
     // ===== Logs =====
@@ -877,6 +978,23 @@
         return (m / 60) * h;
     }
 
+    function computePaybackMinutes(cost, hourly){
+        const c = Number(cost || 0);
+        const h = Number(hourly || 0);
+        if(c <= 0 || h <= 0) return 0;
+        return (c / h) * 60;
+    }
+
+    function formatDuration(mins){
+        const m = Math.round(mins || 0);
+        if(m <= 0) return "0 分钟";
+        if(m < 60) return `${m} 分钟`;
+        const h = Math.floor(m / 60);
+        const r = m % 60;
+        if(r === 0) return `${h} 小时`;
+        return `${h} 小时 ${r} 分钟`;
+    }
+
     // ===== Navigation =====
     function activateSection(id){
         document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
@@ -887,7 +1005,6 @@
         const btn = document.querySelector(`.navbtn[data-target="${id}"]`);
         if(btn) btn.classList.add("active");
 
-        // When navigating, refresh relevant renders
         recalcAll();
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -946,17 +1063,77 @@
         $("breakevenResult").textContent = "";
     }
 
-    // ===== Add Log =====
+    // ===== Spend quick =====
+    function spendQuick(){
+        const s = getSettings();
+        const cost = parseFloat($("spendCostQuick").value);
+        const code = $("spendRateQuick").value;
+        const hourly = rateOf(code, s);
+
+        if(!Number.isFinite(cost) || cost <= 0){
+            $("spendQuickResult").textContent = "请输入消费金额（>0）。";
+            return;
+        }
+        if(hourly <= 0){
+            $("spendQuickResult").textContent = "请先在【设置】中设置对应时薪。";
+            return;
+        }
+        const mins = computePaybackMinutes(cost, hourly);
+        $("spendQuickResult").textContent =
+            `要赚回 ${money(cost)} 元，约需要 ${formatDuration(mins)}（按 ${code} 时薪 ${hourly}/h）`;
+    }
+    function spendQuickClear(){
+        $("spendCostQuick").value = "";
+        $("spendQuickResult").textContent = "";
+    }
+
+    // ===== Add Log (with spend) =====
+    function toggleLogFields(){
+        const type = $("type").value;
+        const isSpend = type === "消费";
+        $("durationWrap").style.display = isSpend ? "none" : "block";
+        $("costWrap").style.display = isSpend ? "block" : "none";
+        // quick add buttons
+        const showQuick = !isSpend;
+        $("btnQuickAdd10").style.display = showQuick ? "inline-block" : "none";
+        $("btnQuickAdd30").style.display = showQuick ? "inline-block" : "none";
+        $("btnQuickAdd60").style.display = showQuick ? "inline-block" : "none";
+        updateLogPreview();
+    }
+
     function updateLogPreview(){
         const s = getSettings();
         const type = $("type").value;
-        const mins = parseFloat($("duration").value);
         const code = $("logRate").value;
         const hourly = rateOf(code, s);
-        const v = (Number.isFinite(mins) && mins > 0) ? computeValue(mins, hourly) : 0;
-        $("logValuePreview").textContent = money(v);
 
-        const rule = s.balanceRule;
+        let preview = "";
+        if(hourly <= 0){
+            preview = "请先在【设置】中设置对应时薪。";
+            $("logPreviewLine").textContent = preview;
+            $("logValueRuleHint").textContent = "";
+            return;
+        }
+
+        if(type === "消费"){
+            const cost = parseFloat($("spendCost").value);
+            if(!Number.isFinite(cost) || cost <= 0){
+                preview = "请输入消费金额（元）。";
+            }else{
+                const mins = computePaybackMinutes(cost, hourly);
+                preview = `消费 ${money(cost)} 元 → 需要 ${formatDuration(mins)} 才能回本（按 ${code} 时薪 ${hourly}/h）`;
+            }
+            $("logPreviewLine").textContent = preview;
+            $("logValueRuleHint").textContent = "消费默认不计入余额（仅记录 + 回本换算）。";
+            return;
+        }
+
+        const mins = parseFloat($("duration").value);
+        const v = (Number.isFinite(mins) && mins > 0) ? computeValue(mins, hourly) : 0;
+        preview = `本次时长 ${Number.isFinite(mins)?mins:0} 分钟 → 价值 ≈ ${money(v)} 元等价（按 ${code} 时薪 ${hourly}/h）`;
+        $("logPreviewLine").textContent = preview;
+
+        const rule = getSettings().balanceRule;
         const auto = shouldAutoAddToBalance(type, rule);
         let text = "";
         if(rule === "manual") text = "当前规则：仅手动转入（保存记录不会自动累积余额）。";
@@ -976,13 +1153,7 @@
     function addLog(){
         const s = getSettings();
         const type = $("type").value;
-        const duration = parseFloat($("duration").value);
         const note = ($("note").value || "").trim();
-
-        if(!Number.isFinite(duration) || duration <= 0){
-            toast("请输入时长（分钟）> 0");
-            return;
-        }
 
         const recoverScore = clamp(parseFloat($("recoverScore").value), 0, 5);
         const assetScore   = clamp(parseFloat($("assetScore").value), 0, 5);
@@ -990,13 +1161,43 @@
 
         const rateCode = $("logRate").value;
         const hourly = rateOf(rateCode, s);
-        const value = computeValue(duration, hourly);
+        if(hourly <= 0){
+            toast("请先在【设置】中设置对应时薪");
+            return;
+        }
+
+        let duration = null;
+        let value = 0;
+        let spendCost = null;
+        let paybackMins = null;
+
+        if(type === "消费"){
+            const cost = parseFloat($("spendCost").value);
+            if(!Number.isFinite(cost) || cost <= 0){
+                toast("消费记录需要填写金额（>0）");
+                return;
+            }
+            spendCost = cost;
+            paybackMins = computePaybackMinutes(cost, hourly);
+            // 消费本身没有“时间价值收入”，不参与余额累计（先按你的现阶段需求）
+            value = 0;
+        }else{
+            const mins = parseFloat($("duration").value);
+            if(!Number.isFinite(mins) || mins <= 0){
+                toast("请输入时长（分钟）> 0");
+                return;
+            }
+            duration = mins;
+            value = computeValue(mins, hourly);
+        }
 
         const log = {
             id: Date.now(),
             at: nowISO(),
             type,
-            duration,
+            duration,      // 非消费才有
+            spendCost,     // 仅消费才有
+            paybackMins,   // 仅消费才有（按记录时选择的时薪）
             note,
             recoverScore,
             assetScore,
@@ -1010,7 +1211,8 @@
         logs.unshift(log);
         saveLogs(logs);
 
-        if(shouldAutoAddToBalance(type, s.balanceRule) && value > 0){
+        // Auto balance (only for non-spend & allowed)
+        if(type !== "消费" && shouldAutoAddToBalance(type, s.balanceRule) && value > 0){
             setBalance(getBalance() + value);
         }
 
@@ -1020,8 +1222,9 @@
         $("assetScore").value = "";
         $("hasOutput").value = "unknown";
         $("duration").value = "";
-        updateLogPreview();
+        $("spendCost").value = "";
 
+        updateLogPreview();
         recalcAll();
         toast("已保存记录");
         activateSection("sec-dashboard");
@@ -1038,7 +1241,6 @@
     function renderRecent(){
         const logs = getLogs().slice(0, 8);
         const container = $("recentList");
-        if(!container) return;
 
         if(logs.length === 0){
             container.innerHTML = `<div class="item"><div class="left"><div class="note">暂无记录</div><div class="meta">去“新增记录”写下第一条吧。</div></div></div>`;
@@ -1047,20 +1249,27 @@
 
         container.innerHTML = logs.map(l=>{
             const cls = tagClass(l.type);
+            const mainLine = l.type === "消费"
+                ? `<span class="chip">消费 ${money(l.spendCost||0)} 元</span>`
+                : `<span class="chip">${l.duration} 分钟</span>`;
+
+            const rightLine = l.type === "消费"
+                ? `<div class="money">${formatDuration(l.paybackMins||0)}</div><div class="submoney">回本时间</div>`
+                : `<div class="money">${l.value>0?`+ ${money(l.value)}`:`0.00`}</div><div class="submoney">等价价值</div>`;
+
             return `
         <div class="item">
           <div class="left">
             <div class="topline">
               <span class="tag ${cls}">${l.type}</span>
-              <span class="chip">${l.duration} 分钟</span>
+              ${mainLine}
               <span class="chip">按 ${l.rateCode}</span>
             </div>
             ${l.note ? `<div class="note">${escapeHtml(l.note)}</div>` : `<div class="meta">（无备注）</div>`}
             <div class="meta">${toLocalDateTime(l.at)}</div>
           </div>
           <div class="right">
-            <div class="money">${l.value>0?`+ ${money(l.value)}`:`0.00`}</div>
-            <div class="submoney">等价价值</div>
+            ${rightLine}
           </div>
         </div>
       `;
@@ -1069,9 +1278,9 @@
 
     function renderLogs(){
         const logs = getLogs();
-        const limit = parseInt($("limit")?.value || "100", 10);
-        const q = ($("searchText")?.value || "").trim().toLowerCase();
-        const filter = $("filterType")?.value || "all";
+        const limit = parseInt($("limit").value || "100", 10);
+        const q = ($("searchText").value || "").trim().toLowerCase();
+        const filter = $("filterType").value || "all";
 
         const filtered = logs.filter(l=>{
             const typeOk = (filter === "all") ? true : l.type === filter;
@@ -1080,8 +1289,6 @@
         }).slice(0, limit);
 
         const container = $("logs");
-        if(!container) return;
-
         if(filtered.length === 0){
             container.innerHTML = `<div class="item"><div class="left"><div class="note">暂无记录</div><div class="meta">调整筛选条件或新增记录。</div></div></div>`;
             return;
@@ -1095,12 +1302,22 @@
             if(l.hasOutput === "yes") badges.push(`<span class="chip">有输出</span>`);
             if(l.hasOutput === "no") badges.push(`<span class="chip">无输出</span>`);
 
+            const mid = l.type === "消费"
+                ? `<span class="chip">消费 ${money(l.spendCost||0)} 元</span>`
+                : `<span class="chip">${l.duration} 分钟</span>`;
+
+            const rightBlock = l.type === "消费"
+                ? `<div class="money">${formatDuration(l.paybackMins||0)}</div>
+           <div class="submoney">回本时间（按 ${l.rateCode} 时薪 ${l.hourly}/h）</div>`
+                : `<div class="money">${l.value>0?`+ ${money(l.value)} 元`:`0.00`}</div>
+           <div class="submoney">等价价值（非收入）</div>`;
+
             return `
         <div class="item">
           <div class="left">
             <div class="topline">
               <span class="tag ${cls}">${l.type}</span>
-              <span class="chip">${l.duration} 分钟</span>
+              ${mid}
               <span class="chip">按 ${l.rateCode}（${l.hourly}/h）</span>
               ${badges.join("")}
             </div>
@@ -1108,8 +1325,7 @@
             <div class="meta">${toLocalDateTime(l.at)}</div>
           </div>
           <div class="right">
-            <div class="money">${l.value>0?`+ ${money(l.value)} 元`:`0.00`}</div>
-            <div class="submoney">等价价值（非收入）</div>
+            ${rightBlock}
           </div>
         </div>
       `;
@@ -1129,18 +1345,24 @@
         });
 
         const count = recent.length;
-        const totalMins = recent.reduce((a,l)=> a + Number(l.duration||0), 0);
-        const focusMins = recent.filter(l => l.type === "学习" || l.type === "工作")
+
+        // 只统计“有时长”的记录（消费 duration=null）
+        const recentWithDuration = recent.filter(l => Number.isFinite(Number(l.duration)) && Number(l.duration) > 0);
+
+        const totalMins = recentWithDuration.reduce((a,l)=> a + Number(l.duration||0), 0);
+        const focusMins = recentWithDuration
+            .filter(l => l.type === "学习" || l.type === "工作")
             .reduce((a,l)=> a + Number(l.duration||0), 0);
+
         const focusPct = totalMins > 0 ? (focusMins / totalMins) * 100 : 0;
 
         const hourly = rateOf(s.defaultRate || "B", s);
         const value = computeValue(totalMins, hourly);
 
-        if($("kpiCount")) $("kpiCount").textContent = String(count);
-        if($("kpiMins")) $("kpiMins").textContent = `${Math.round(totalMins)} 分钟`;
-        if($("kpiFocus")) $("kpiFocus").textContent = `${focusPct.toFixed(0)}%`;
-        if($("kpiValue")) $("kpiValue").textContent = money(value);
+        $("kpiCount").textContent = String(count);
+        $("kpiMins").textContent = `${Math.round(totalMins)} 分钟`;
+        $("kpiFocus").textContent = `${focusPct.toFixed(0)}%`;
+        $("kpiValue").textContent = money(value);
     }
 
     function recalcAll(){
@@ -1148,6 +1370,7 @@
         calcKPIs();
         renderRecent();
         renderLogs();
+        updateLogPreview();
     }
 
     // ===== Data Tools =====
@@ -1187,7 +1410,6 @@
                 localStorage.setItem(LOGS_KEY, JSON.stringify(data.logs));
                 localStorage.setItem(BALANCE_KEY, String(Number(data.balance||0)));
                 applySettingsToUI(getSettings());
-                updateLogPreview();
                 recalcAll();
                 toast("已导入并覆盖本地数据");
             }catch{
@@ -1204,7 +1426,6 @@
         localStorage.removeItem(LOGS_KEY);
         localStorage.removeItem(BALANCE_KEY);
         applySettingsToUI(getSettings());
-        updateLogPreview();
         recalcAll();
         toast("已重置");
     }
@@ -1217,12 +1438,153 @@
         toast("已清空账本");
     }
 
+    // ===== AI Estimate (Settings page) =====
+    let lastAiSuggested = null;
+
+    function parseFirstJsonObject(text){
+        // 尝试从回复里提取 JSON（支持模型输出夹杂说明）
+        const start = text.indexOf("{");
+        const end = text.lastIndexOf("}");
+        if(start === -1 || end === -1 || end <= start) return null;
+        const maybe = text.slice(start, end+1);
+        try{ return JSON.parse(maybe); }catch{ return null; }
+    }
+
+    async function callAI(messages){
+        const res = await fetch(AI_ENDPOINT, {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({ messages })
+        });
+        if(!res.ok){
+            const t = await res.text().catch(()=> "");
+            throw new Error(`HTTP ${res.status} ${t}`.slice(0,300));
+        }
+        const data = await res.json();
+        const content = data?.choices?.[0]?.message?.content || "";
+        return content;
+    }
+
+    async function aiEstimateABC(){
+        const monthly = parseFloat($("aiIncomeMonthly").value);
+        const workdays = parseFloat($("aiWorkdays").value);
+        const hoursDay = parseFloat($("aiHoursPerDay").value);
+        const commute = parseFloat($("aiCommutePerDay").value || "0");
+        const overtime = parseFloat($("aiOvertimePerWeek").value || "0");
+        const premium = parseFloat($("aiPrivatePremium").value || "2");
+
+        if(!Number.isFinite(monthly) || monthly <= 0){
+            toast("请填写税后月收入（>0）");
+            return;
+        }
+        if(!Number.isFinite(workdays) || workdays <= 0 || workdays > 7){
+            toast("请填写合理的每周工作天数（1-7）");
+            return;
+        }
+        if(!Number.isFinite(hoursDay) || hoursDay <= 0 || hoursDay > 24){
+            toast("请填写合理的每天工作小时（>0）");
+            return;
+        }
+
+        $("btnAiEstimate").disabled = true;
+        $("btnAiApply").disabled = true;
+        $("aiEstimateOutput").style.display = "block";
+        $("aiEstimateOutput").textContent = "AI 正在估算中…";
+
+        const userPayload = {
+            monthly_take_home_income: monthly,
+            workdays_per_week: workdays,
+            work_hours_per_day: hoursDay,
+            commute_hours_per_day: Number.isFinite(commute) ? commute : 0,
+            overtime_hours_per_week: Number.isFinite(overtime) ? overtime : 0,
+            private_time_premium_multiplier: Number.isFinite(premium) ? premium : 2
+        };
+
+        const system = [
+            "你是一个非常务实的个人财务与时间价值顾问。",
+            "目标：根据用户提供的收入和工作结构，估算三个时薪：",
+            "A=标准时薪（以合同/岗位为基准的小时产出），",
+            "B=有效时薪（考虑通勤/加班/碎片化等导致的有效可支配下降，通常<=A，推荐日常使用），",
+            "C=私人时间定价（用户私人时间底价，通常>=B，可用倍数表达）。",
+            "请输出 JSON（不要使用代码块），字段必须包含：hourlyA, hourlyB, hourlyC, reasoning, assumptions。",
+            "hourlyA/hourlyB/hourlyC 为数字（元/小时），保留 1 位小数以内即可。"
+        ].join("\n");
+
+        const user = [
+            "用户输入如下（JSON）：",
+            JSON.stringify(userPayload),
+            "",
+            "请你：",
+            "1) 给出 hourlyA/hourlyB/hourlyC",
+            "2) 简要说明推导逻辑（reasoning）",
+            "3) 写明你做了哪些默认假设（assumptions），例如：每月按 4.33 周/或 4 周等"
+        ].join("\n");
+
+        try{
+            const content = await callAI([
+                {role:"system", content: system},
+                {role:"user", content: user}
+            ]);
+
+            const obj = parseFirstJsonObject(content);
+            if(obj && typeof obj === "object"){
+                lastAiSuggested = obj;
+                $("aiEstimateOutput").textContent =
+                    `AI 建议（可应用）：\n` +
+                    `A = ${obj.hourlyA} 元/小时\n` +
+                    `B = ${obj.hourlyB} 元/小时\n` +
+                    `C = ${obj.hourlyC} 元/小时\n\n` +
+                    `reasoning: ${obj.reasoning || ""}\n\n` +
+                    `assumptions: ${obj.assumptions || ""}`;
+                $("btnAiApply").disabled = false;
+            }else{
+                lastAiSuggested = null;
+                $("aiEstimateOutput").textContent =
+                    "AI 返回了结果，但未解析到标准 JSON。\n\n原文如下：\n" + content;
+            }
+        }catch(e){
+            lastAiSuggested = null;
+            $("aiEstimateOutput").textContent = "AI 调用失败：\n" + (e?.message || String(e));
+        }finally{
+            $("btnAiEstimate").disabled = false;
+        }
+    }
+
+    function aiApplyABC(){
+        if(!lastAiSuggested) return;
+        const a = parseFloat(lastAiSuggested.hourlyA);
+        const b = parseFloat(lastAiSuggested.hourlyB);
+        const c = parseFloat(lastAiSuggested.hourlyC);
+        if(!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c)){
+            toast("AI 建议值不合法，无法应用");
+            return;
+        }
+        $("hourlyA").value = a;
+        $("hourlyB").value = b;
+        $("hourlyC").value = c;
+        saveSettings();
+        toast("已应用 AI 建议到 A/B/C");
+    }
+
+    function aiClear(){
+        lastAiSuggested = null;
+        $("aiIncomeMonthly").value = "";
+        $("aiWorkdays").value = "";
+        $("aiHoursPerDay").value = "";
+        $("aiCommutePerDay").value = "";
+        $("aiOvertimePerWeek").value = "";
+        $("aiPrivatePremium").value = "";
+        $("aiEstimateOutput").style.display = "none";
+        $("aiEstimateOutput").textContent = "";
+        $("btnAiApply").disabled = true;
+    }
+
     // ===== Init =====
     function init(){
         const s = getSettings();
         applySettingsToUI(s);
 
-        // Nav bindings
+        // Nav
         $("nav").addEventListener("click", (e)=>{
             const btn = e.target.closest(".navbtn");
             if(!btn) return;
@@ -1230,56 +1592,63 @@
         });
 
         // Settings
-        $("btnSaveSettings")?.addEventListener("click", saveSettings);
-        $("btnLoadSettings")?.addEventListener("click", ()=>{
+        $("btnSaveSettings").addEventListener("click", saveSettings);
+        $("btnLoadSettings").addEventListener("click", ()=>{
             applySettingsToUI(getSettings());
-            updateLogPreview();
             recalcAll();
             toast("已读取设置");
         });
 
         // Calc
-        $("btnConvert")?.addEventListener("click", convert);
-        $("btnConvertClear")?.addEventListener("click", clearConvert);
-        $("btnBreakeven")?.addEventListener("click", breakeven);
-        $("btnBreakevenClear")?.addEventListener("click", clearBreakeven);
+        $("btnConvert").addEventListener("click", convert);
+        $("btnConvertClear").addEventListener("click", clearConvert);
+        $("btnBreakeven").addEventListener("click", breakeven);
+        $("btnBreakevenClear").addEventListener("click", clearBreakeven);
+        $("btnSpendQuick").addEventListener("click", spendQuick);
+        $("btnSpendQuickClear").addEventListener("click", spendQuickClear);
 
         // Log
-        $("type")?.addEventListener("change", updateLogPreview);
-        $("duration")?.addEventListener("input", updateLogPreview);
-        $("logRate")?.addEventListener("change", updateLogPreview);
-        $("btnAddLog")?.addEventListener("click", addLog);
-        $("btnQuickAdd10")?.addEventListener("click", ()=> addMinutes(10));
-        $("btnQuickAdd30")?.addEventListener("click", ()=> addMinutes(30));
-        $("btnQuickAdd60")?.addEventListener("click", ()=> addMinutes(60));
+        $("type").addEventListener("change", toggleLogFields);
+        $("duration").addEventListener("input", updateLogPreview);
+        $("spendCost").addEventListener("input", updateLogPreview);
+        $("logRate").addEventListener("change", updateLogPreview);
+        $("btnAddLog").addEventListener("click", addLog);
+        $("btnQuickAdd10").addEventListener("click", ()=> addMinutes(10));
+        $("btnQuickAdd30").addEventListener("click", ()=> addMinutes(30));
+        $("btnQuickAdd60").addEventListener("click", ()=> addMinutes(60));
 
         // Ledger
-        $("filterType")?.addEventListener("change", renderLogs);
-        $("searchText")?.addEventListener("input", renderLogs);
-        $("limit")?.addEventListener("change", renderLogs);
-        $("btnRefresh")?.addEventListener("click", ()=>{ recalcAll(); toast("已刷新"); });
-        $("btnClearLogs")?.addEventListener("click", clearLogs);
+        $("filterType").addEventListener("change", renderLogs);
+        $("searchText").addEventListener("input", renderLogs);
+        $("limit").addEventListener("change", renderLogs);
+        $("btnRefresh").addEventListener("click", ()=>{ recalcAll(); toast("已刷新"); });
+        $("btnClearLogs").addEventListener("click", clearLogs);
 
         // Data
-        $("btnExport")?.addEventListener("click", exportJSON);
-        $("btnImport")?.addEventListener("click", importJSON);
-        $("btnReset")?.addEventListener("click", resetAll);
+        $("btnExport").addEventListener("click", exportJSON);
+        $("btnImport").addEventListener("click", importJSON);
+        $("btnReset").addEventListener("click", resetAll);
 
         // Quick ops
-        $("btnZeroBalance")?.addEventListener("click", ()=>{
+        $("btnZeroBalance").addEventListener("click", ()=>{
             const ok = confirm("确定把余额归零吗？账本记录不会删除。");
             if(!ok) return;
             setBalance(0);
             toast("余额已归零");
         });
-        $("btnRecalcKPIs")?.addEventListener("click", ()=>{
+        $("btnRecalcKPIs").addEventListener("click", ()=>{
             recalcAll();
             toast("已重算");
         });
 
-        // Initial render
+        // AI settings
+        $("btnAiEstimate").addEventListener("click", aiEstimateABC);
+        $("btnAiApply").addEventListener("click", aiApplyABC);
+        $("btnAiClear").addEventListener("click", aiClear);
+
+        // First render
         setBalance(getBalance());
-        updateLogPreview();
+        toggleLogFields();
         recalcAll();
     }
 
